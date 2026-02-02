@@ -7,7 +7,6 @@ import { S3Module } from '../infra/s3/s3.module';
 import { EmailService } from '../infra/email/email.service';
 import { RabbitMQModule } from 'src/infra/rabbitmq/rabbitmq.module';
 
-
 @Module({
   imports: [DatabaseInfraModule, S3Module, forwardRef(() => RabbitMQModule)],
   controllers: [BackupController],

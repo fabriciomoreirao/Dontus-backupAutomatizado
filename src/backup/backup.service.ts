@@ -27,6 +27,7 @@ export class BackupService {
     dbConfig: DatabaseConfig,
     bucketName: string,
     s3Prefix?: string,
+    importarImagens?: boolean,
   ) {
     const data = {
       clinicaId,
@@ -44,6 +45,7 @@ export class BackupService {
     dbConfig: DatabaseConfig,
     bucketName: string,
     s3Prefix?: string,
+    importarImagens?: boolean,
   ) {
     try {
       this.logger.log(`🔄 Iniciando backup completo da clínica ${clinicaId}...`);
@@ -59,7 +61,7 @@ export class BackupService {
         dbDatabase: dbConfig.database,
       };
 
-      this.processBackupCompleto(clinicaId, email, dbConfig, bucketName, s3Prefix);
+      this.processBackupCompleto(clinicaId, email, dbConfig, bucketName, s3Prefix, importarImagens);
 
       return response;
     } catch (error) {
@@ -73,19 +75,19 @@ export class BackupService {
     dbConfig: DatabaseConfig,
     bucketName: string,
     s3Prefix?: string,
+    importarImagens?: boolean,
   ) {
     try {
       this.logger.log('\n🔍 Iniciando backup sequencial (uma tabela por vez)...');
 
       // Criar stream do Excel ANTES de começar
       const excelStream = await this.generateExcelSequential(clinicaId, dbConfig);
-
-      // Buscar apenas as imagens para processar depois
-      const imagensPacientes = await this.backupRepository.backupImagensPacientes(
-        clinicaId,
-        dbConfig,
-      );
-      this.logger.log(`📊 Imagens: ${imagensPacientes.length}`);
+      let imagensPacientes: interfaces.ImagemPaciente[] | undefined;
+      if (importarImagens) {
+        // Buscar apenas as imagens para processar depois
+        imagensPacientes = await this.backupRepository.backupImagensPacientes(clinicaId, dbConfig);
+        this.logger.log(`📊 Imagens: ${imagensPacientes.length}`);
+      }
 
       // Faz upload do Excel e processa imagens
       await this.uploadToS3(
@@ -95,7 +97,7 @@ export class BackupService {
         bucketName,
         dbConfig.database,
         s3Prefix,
-        imagensPacientes,
+        importarImagens ? imagensPacientes : undefined,
       );
 
       this.logger.log('\n✅ Backup completo concluído com sucesso!');
@@ -218,7 +220,8 @@ export class BackupService {
     bucketName: string,
     database: string,
     s3Prefix?: string,
-    imagensPacientes?: interfaces.ImagemPaciente[],
+    imagensPacientes?: interfaces.ImagemPaciente[] | undefined,
+    importarImagens?: boolean,
   ): Promise<void> {
     try {
       this.logger.log('\n☁️ Preparando upload para S3 (STREAM)...');
@@ -269,20 +272,22 @@ export class BackupService {
         null;
       let imagensZipUrl: string | undefined;
 
-      if (imagensPacientes?.length) {
-        imagensResult = await this.processImagensPacientes(
-          imagensPacientes,
-          bucket,
-          s3Prefix!,
-          folderPath,
-        );
-
-        if (imagensResult?.zipKey) {
-          imagensZipUrl = await this.s3Service.getPresignedUrl(
+      if (importarImagens) {
+        if (imagensPacientes?.length) {
+          imagensResult = await this.processImagensPacientes(
+            imagensPacientes,
             bucket,
-            imagensResult.zipKey,
-            604800,
+            s3Prefix!,
+            folderPath,
           );
+
+          if (imagensResult?.zipKey) {
+            imagensZipUrl = await this.s3Service.getPresignedUrl(
+              bucket,
+              imagensResult.zipKey,
+              604800,
+            );
+          }
         }
       }
 
@@ -296,8 +301,8 @@ export class BackupService {
 
         📄 Arquivos:
         - BACKUP_COMPLETO.xlsx
-        ${imagensResult ? `- imagens/ (${imagensResult.uploadedImages} arquivos)` : ''}
-        ${imagensZipUrl ? `- imagens.zip (arquivo compactado)` : ''}
+        ${importarImagens && imagensResult ? `- imagens/ (${imagensResult.uploadedImages} arquivos)` : ''}
+        ${importarImagens && imagensZipUrl ? `- imagens.zip (arquivo compactado)` : ''}
         `.trim();
 
       await this.s3Service.uploadObject(
@@ -313,7 +318,9 @@ export class BackupService {
         clinicaId,
         excelUrl,
         database,
-        imagensResult ? { ...imagensResult, folderUrl: imagensZipUrl } : undefined,
+        importarImagens && imagensResult
+          ? { ...imagensResult, folderUrl: imagensZipUrl }
+          : undefined,
       );
 
       this.logger.log('✅ Backup finalizado e email enviado');

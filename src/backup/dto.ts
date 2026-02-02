@@ -1,4 +1,4 @@
-import { IsNumber, IsString, IsNotEmpty, IsOptional, IsEmail } from 'class-validator';
+import { IsNumber, IsString, IsNotEmpty, IsOptional, IsEmail, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class DatabaseConfigDto {
@@ -47,6 +47,16 @@ export class BackupRequestDto {
   @IsString()
   @IsOptional()
   s3Prefix?: string;
+
+  @ApiProperty({
+    example: false,
+    description: 'Importar imagens após o backup (opcional)',
+    required: false,
+    default: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  importarImagens?: boolean = false;
 
   @ApiProperty({ type: DatabaseConfigDto, description: 'Configurações do banco de dados' })
   @IsNotEmpty()

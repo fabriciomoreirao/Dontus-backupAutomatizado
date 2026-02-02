@@ -23,15 +23,19 @@ export class BackupConsumer implements OnModuleInit {
           dbConfig: DatabaseConfig;
           bucketName: string;
           s3Prefix?: string;
+          importarImagens?: boolean;
         }) => {
           try {
-            this.logger.log(`📥 Recebida solicitação de backup para clinicaId: ${data.clinicaId}, email: ${data.email}`);
+            this.logger.log(
+              `📥 Recebida solicitação de backup para clinicaId: ${data.clinicaId}, email: ${data.email}`,
+            );
             await this.backupService.getBackupByClinica(
               data.clinicaId,
               data.email,
               data.dbConfig,
               data.bucketName,
               data.s3Prefix,
+              data.importarImagens === true ? true : false,
             );
           } catch (err) {
             this.logger.error('Erro ao processar backup:', err);

@@ -26,6 +26,7 @@ export class BackupController {
       dto.dbConfig,
       dto.bucketName,
       dto.s3Prefix,
+      dto.importarImagens,
     );
   }
 }
