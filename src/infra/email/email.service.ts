@@ -66,7 +66,7 @@ export class EmailService {
     database?: string,
     imagensResult?: { totalImages: number; uploadedImages: number; folderUrl?: string },
   ): Promise<void> {
-    const dataAtual = new Date().toLocaleDateString('pt-BR', {
+    const dataAtual = new Date(Date.now() - 3 * 60 * 60 * 1000).toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
