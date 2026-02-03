@@ -83,7 +83,7 @@ export class BackupService {
       this.logger.log('\n🔍 Iniciando backup sequencial (uma tabela por vez)...');
 
       // Criar stream do Excel ANTES de começar
-      const excelStream = await this.generateExcelSequential(clinicaId, dbConfig);
+      const excelStream = await this.generateExcelSequential(clinicaId, dbConfig, importarImagens);
       let imagensPacientes: interfaces.ImagemPaciente[] | undefined;
       if (importarImagens) {
         // Buscar apenas as imagens para processar depois
@@ -112,6 +112,7 @@ export class BackupService {
   private async generateExcelSequential(
     clinicaId: number,
     dbConfig: DatabaseConfig,
+    importarImagens?: boolean,
   ): Promise<PassThrough> {
     try {
       this.logger.log('\n📝 Gerando Excel sequencial (STREAMING)...');
@@ -147,6 +148,11 @@ export class BackupService {
         try {
           for (const table of tablesToProcess) {
             this.logger.log(`🔍 Processando tabela: ${table.name}...`);
+
+            if (!importarImagens && table.name === 'Imagens') {
+              this.logger.log(`⚠️ Aba "${table.name}" pulada porque importarImagens está desativado.`);
+              continue;
+            }
 
             const data = await this.backupRepository[table.method](clinicaId, dbConfig);
 
