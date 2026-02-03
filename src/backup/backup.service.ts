@@ -9,6 +9,7 @@ import * as interfaces from '../common/interfaces';
 import * as archiver from 'archiver';
 import { PassThrough } from 'stream';
 import { RabbitMQService } from 'src/infra/rabbitmq/rabbitmq.service';
+import { subHours } from 'date-fns';
 
 @Injectable()
 export class BackupService {
@@ -35,6 +36,7 @@ export class BackupService {
       dbConfig,
       bucketName,
       s3Prefix,
+      importarImagens,
     };
     this.rabbitMQService.publishToQueue('backupQueue', data);
   }
@@ -97,7 +99,8 @@ export class BackupService {
         bucketName,
         dbConfig.database,
         s3Prefix,
-        importarImagens ? imagensPacientes : undefined,
+        imagensPacientes,
+        importarImagens,
       );
 
       this.logger.log('\n✅ Backup completo concluído com sucesso!');
@@ -186,8 +189,17 @@ export class BackupService {
 
             // Adiciona os dados linha por linha
             for (const row of data) {
-              const values = headers.map(h => row[h]);
-              worksheet.addRow(values).commit();
+              const excelRow = worksheet.addRow(headers.map(h => row[h]));
+
+              headers.forEach((header, index) => {
+                const value = row[header];
+
+                if (value instanceof Date) {
+                  excelRow.getCell(index + 1).numFmt = 'dd/mm/yyyy hh:mm';
+                }
+              });
+
+              excelRow.commit();
             }
 
             worksheet.commit();
@@ -293,11 +305,12 @@ export class BackupService {
 
       // 3️⃣ README (sem tamanho do Excel)
       const readmeKey = `${folderPath}/README.txt`;
+      const dataHora = subHours(new Date(), 3).toISOString().replace('T', ' ').substring(0, 16);
 
       const readmeContent = `
         BACKUP COMPLETO - CLÍNICA ${clinicaId}
         Base de Dados: ${database}
-        Data/Hora: ${new Date().toLocaleString('pt-BR')}
+        Data/Hora: ${dataHora}
 
         📄 Arquivos:
         - BACKUP_COMPLETO.xlsx

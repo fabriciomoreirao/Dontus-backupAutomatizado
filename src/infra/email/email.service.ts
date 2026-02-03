@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { CustomException } from 'src/common/exceptions/custom.exception';
+import { subHours } from 'date-fns';
 
 @Injectable()
 export class EmailService {
@@ -66,13 +67,7 @@ export class EmailService {
     database?: string,
     imagensResult?: { totalImages: number; uploadedImages: number; folderUrl?: string },
   ): Promise<void> {
-    const dataAtual = new Date(Date.now() - 3 * 60 * 60 * 1000).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    const dataAtual = subHours(new Date(), 3).toISOString().replace('T', ' ').substring(0, 16);
 
     const subject = `Backup Completo - Clínica ${clinicaId} (${database || 'Base de Dados'})`;
     const body = `
