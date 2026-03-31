@@ -3,7 +3,6 @@ import { RabbitMQConsumer } from '../rabbitmq.consumer';
 import { Logger } from '@nestjs/common';
 import { BackupService } from 'src/backup/backup.service';
 import { DatabaseConfig } from '../../database/sql/sql.service';
-import { log } from 'console';
 
 @Injectable()
 export class BackupConsumer implements OnModuleInit {

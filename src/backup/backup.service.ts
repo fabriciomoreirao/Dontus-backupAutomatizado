@@ -150,7 +150,9 @@ export class BackupService {
             this.logger.log(`🔍 Processando tabela: ${table.name}...`);
 
             if (!importarImagens && table.name === 'Imagens') {
-              this.logger.log(`⚠️ Aba "${table.name}" pulada porque importarImagens está desativado.`);
+              this.logger.log(
+                `⚠️ Aba "${table.name}" pulada porque importarImagens está desativado.`,
+              );
               continue;
             }
 
