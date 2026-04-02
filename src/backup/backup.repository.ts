@@ -45,6 +45,73 @@ export class BackupRepository {
     return await this.databaseService.executeQueryWithConfig<interfaces.Paciente>(dbConfig, query);
   }
 
+  // Com Anotações
+  // async backupPacientes(
+  //   clinicaId: number,
+  //   dbConfig: DatabaseConfig,
+  // ): Promise<interfaces.Paciente[]> {
+  //   const query = `
+  //     SELECT 
+  //       PACIENTES.NOME, 
+  //       PACIENTES.CPF, 
+  //       PACIENTES.RG, 
+  //       PACIENTES.CEP, 
+  //       PACIENTES.DATADENASCIMENTO, 
+  //       PACIENTES.OBSERVACAO,
+  //       PACIENTES.EMAIL, 
+  //       PACIENTES.STATUS, 
+  //       PACIENTES.UF, 
+  //       PACIENTES.CIDADE,
+  //       PACIENTES.LOGRADOURO, 
+  //       PACIENTES.BAIRRO, 
+  //       PACIENTES.NUMERO, 
+  //       PACIENTES.TEL1, 
+  //       PACIENTES.TEL2, 
+  //       PACIENTES.CEL, 
+  //       PACIENTES.DATACRIACAO, 
+  //       PACIENTES.SEXO, 
+  //       PACIENTES.COMPLEMENTO, 
+  //       PACIENTES.NUMEROFICHA, 
+  //       PACIENTES.FOTO, 
+  //       PACIENTES.NOME_RESPONSAVEL, 
+  //       PACIENTES.CPF_RESPONSAVEL,
+  //       STRING_AGG(
+  //         CONVERT(VARCHAR, PACIENTE_ANOTACOES.DATA, 103) + ' - ' + PACIENTE_ANOTACOES.DESCRICAO,
+  //         CHAR(13) + CHAR(10)
+  //       ) WITHIN GROUP (ORDER BY PACIENTE_ANOTACOES.DATA) AS ANOTACOES
+  //     FROM PACIENTES
+  //     JOIN CLINICAS ON PACIENTES.ID_CLINICA = CLINICAS.ID
+  //     LEFT JOIN PACIENTE_ANOTACOES ON PACIENTES.ID = PACIENTE_ANOTACOES.ID_PACIENTE
+  //     WHERE PACIENTES.ID_CLINICA = ${clinicaId}
+  //     GROUP BY 
+  //       PACIENTES.NOME, 
+  //       PACIENTES.CPF, 
+  //       PACIENTES.RG, 
+  //       PACIENTES.CEP, 
+  //       PACIENTES.DATADENASCIMENTO, 
+  //       PACIENTES.OBSERVACAO,
+  //       PACIENTES.EMAIL, 
+  //       PACIENTES.STATUS, 
+  //       PACIENTES.UF, 
+  //       PACIENTES.CIDADE,
+  //       PACIENTES.LOGRADOURO, 
+  //       PACIENTES.BAIRRO, 
+  //       PACIENTES.NUMERO, 
+  //       PACIENTES.TEL1, 
+  //       PACIENTES.TEL2, 
+  //       PACIENTES.CEL, 
+  //       PACIENTES.DATACRIACAO, 
+  //       PACIENTES.SEXO, 
+  //       PACIENTES.COMPLEMENTO, 
+  //       PACIENTES.NUMEROFICHA, 
+  //       PACIENTES.FOTO, 
+  //       PACIENTES.NOME_RESPONSAVEL, 
+  //       PACIENTES.CPF_RESPONSAVEL
+  //   `;
+
+  //   return await this.databaseService.executeQueryWithConfig<interfaces.Paciente>(dbConfig, query);
+  // }
+
   async backupOrigemPacientes(
     clinicaId: number,
     dbConfig: DatabaseConfig,
