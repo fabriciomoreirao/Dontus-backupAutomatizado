@@ -6,8 +6,12 @@ import { EmailService } from '../infra/email/email.service';
 import * as ExcelJS from 'exceljs';
 import { CustomException } from '../common/exceptions/custom.exception';
 import * as interfaces from '../common/interfaces';
-import * as archiver from 'archiver';
+import { createWriteStream } from 'fs';
+import { mkdir, rename, rm } from 'fs/promises';
+import { homedir } from 'os';
+import { basename, join } from 'path';
 import { PassThrough } from 'stream';
+import { pipeline } from 'stream/promises';
 import { RabbitMQService } from 'src/infra/rabbitmq/rabbitmq.service';
 import { subHours } from 'date-fns';
 
@@ -288,26 +292,20 @@ export class BackupService {
       this.logger.log(`✅ Excel enviado com sucesso`);
 
       // 2️⃣ Imagens
-      let imagensResult: { totalImages: number; uploadedImages: number; zipKey?: string } | null =
-        null;
-      let imagensZipUrl: string | undefined;
+      let imagensResult: {
+        totalImages: number;
+        uploadedImages: number;
+        localFolderPath?: string;
+      } | null = null;
 
       if (importarImagens) {
         if (imagensPacientes?.length) {
-          imagensResult = await this.processImagensPacientes(
+          imagensResult = await this.processImagensPacientesLocal(
             imagensPacientes,
             bucket,
             s3Prefix!,
-            folderPath,
+            backupFolderName,
           );
-
-          if (imagensResult?.zipKey) {
-            imagensZipUrl = await this.s3Service.getPresignedUrl(
-              bucket,
-              imagensResult.zipKey,
-              604800,
-            );
-          }
         }
       }
 
@@ -322,8 +320,7 @@ export class BackupService {
 
         📄 Arquivos:
         - BACKUP_COMPLETO.xlsx
-        ${importarImagens && imagensResult ? `- imagens/ (${imagensResult.uploadedImages} arquivos)` : ''}
-        ${importarImagens && imagensZipUrl ? `- imagens.zip (arquivo compactado)` : ''}
+        ${importarImagens && imagensResult ? `- Imagens salvas localmente em: ${imagensResult.localFolderPath} (${imagensResult.uploadedImages} arquivos)` : ''}
         `.trim();
 
       await this.s3Service.uploadObject(
@@ -340,7 +337,7 @@ export class BackupService {
         excelUrl,
         database,
         importarImagens && imagensResult
-          ? { ...imagensResult, folderUrl: imagensZipUrl }
+          ? { totalImages: imagensResult.totalImages, uploadedImages: imagensResult.uploadedImages }
           : undefined,
       );
 
@@ -352,17 +349,16 @@ export class BackupService {
   }
 
   /**
-   * Processa e faz upload das imagens na pasta 'imagens/' dentro do backup
+   * Baixa as imagens sequencialmente para a pasta Downloads local.
    */
-
-  private async processImagensPacientes(
+  private async processImagensPacientesLocal(
     imagensPacientes: interfaces.ImagemPaciente[],
     bucket: string,
     s3prefix: string,
-    backupFolderPath: string,
-  ): Promise<{ totalImages: number; uploadedImages: number; zipKey?: string }> {
+    backupFolderName: string,
+  ): Promise<{ totalImages: number; uploadedImages: number; localFolderPath?: string }> {
     try {
-      this.logger.log(`\n🖼️  Processando imagens dos pacientes...`);
+      this.logger.log(`\n🖼️  Baixando imagens dos pacientes uma por vez...`);
 
       const imageKeys = imagensPacientes
         .filter(img => img.FOTO && typeof img.FOTO === 'string')
@@ -375,42 +371,36 @@ export class BackupService {
         return { totalImages: 0, uploadedImages: 0 };
       }
 
-      // Cria um PassThrough stream para o zip
-      const zipStream = new PassThrough();
-      const archive = archiver('zip', { zlib: { level: 9 } });
-      archive.pipe(zipStream);
-
+      const localFolderPath = join(homedir(), 'Downloads', backupFolderName, 'imagens');
+      await mkdir(localFolderPath, { recursive: true });
       let uploadedCount = 0;
 
-      // Inicia upload do ZIP para o S3 (não espera finalizar ainda)
-      const zipKey = `${backupFolderPath}/imagens.zip`;
-      const uploadPromise = this.s3Service.uploadObjectStream(
-        bucket,
-        zipKey,
-        zipStream,
-        'application/zip',
-      );
-
       for (const key of uniqueKeys) {
+        const originalFileName = basename(key.replace(/\\/g, '/')) || 'imagem.jpg';
+        const safeFileName = originalFileName.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
+        const destinationPath = join(localFolderPath, safeFileName);
+        const temporaryPath = `${destinationPath}.part`;
+
         try {
           const imageStream = await this.s3Service.getObjectStream(bucket, s3prefix, key);
-          const fileName = key.split('/').pop() || `${uploadedCount}.jpg`;
-          archive.append(imageStream, { name: fileName });
+          await pipeline(imageStream, createWriteStream(temporaryPath));
+          await rename(temporaryPath, destinationPath);
           uploadedCount++;
+          this.logger.log(`📸 ${uploadedCount}/${uniqueKeys.length} - ${safeFileName}`);
         } catch (error) {
+          await rm(temporaryPath, { force: true });
           this.logger.warn(`⚠️  Erro ao processar ${key}: ${error.message}`);
         }
       }
 
-      await archive.finalize();
-      await uploadPromise;
-
-      this.logger.log(`✅ Imagens compactadas e enviadas como ${zipKey}`);
+      this.logger.log(
+        `✅ ${uploadedCount}/${uniqueKeys.length} imagens salvas em ${localFolderPath}`,
+      );
 
       return {
         totalImages: uniqueKeys.length,
         uploadedImages: uploadedCount,
-        zipKey,
+        localFolderPath,
       };
     } catch (error) {
       this.logger.error(`❌ Erro ao processar imagens: ${error.message}`);
