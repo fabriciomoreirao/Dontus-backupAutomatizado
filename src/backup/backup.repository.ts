@@ -13,30 +13,30 @@ export class BackupRepository {
     dbConfig: DatabaseConfig,
   ): Promise<interfaces.Paciente[]> {
     const query = `
-      SELECT 
-        PACIENTES.NOME, 
-        PACIENTES.CPF, 
-        PACIENTES.RG, 
-        PACIENTES.CEP, 
-        PACIENTES.DATADENASCIMENTO, 
-        PACIENTES.EMAIL, 
-        PACIENTES.STATUS, 
-        PACIENTES.UF, 
+      SELECT
+        PACIENTES.NOME,
+        PACIENTES.CPF,
+        PACIENTES.RG,
+        PACIENTES.CEP,
+        PACIENTES.DATADENASCIMENTO,
+        PACIENTES.EMAIL,
+        PACIENTES.STATUS,
+        PACIENTES.UF,
         PACIENTES.CIDADE,
-        PACIENTES.LOGRADOURO, 
-        PACIENTES.BAIRRO, 
-        PACIENTES.NUMERO, 
-        PACIENTES.TEL1, 
-        PACIENTES.TEL2, 
-        PACIENTES.CEL, 
-        PACIENTES.DATACRIACAO, 
-        PACIENTES.SEXO, 
-        PACIENTES.COMPLEMENTO, 
-        PACIENTES.NUMEROFICHA, 
-        PACIENTES.FOTO, 
+        PACIENTES.LOGRADOURO,
+        PACIENTES.BAIRRO,
+        PACIENTES.NUMERO,
+        PACIENTES.TEL1,
+        PACIENTES.TEL2,
+        PACIENTES.CEL,
+        PACIENTES.DATACRIACAO,
+        PACIENTES.SEXO,
+        PACIENTES.COMPLEMENTO,
+        PACIENTES.NUMEROFICHA,
+        PACIENTES.FOTO,
         PACIENTES.OBSERVACAO,
-        PACIENTES.NOME_RESPONSAVEL, 
-        PACIENTES.CPF_RESPONSAVEL  
+        PACIENTES.NOME_RESPONSAVEL,
+        PACIENTES.CPF_RESPONSAVEL
       FROM PACIENTES
       JOIN CLINICAS ON PACIENTES.ID_CLINICA = CLINICAS.ID
       WHERE PACIENTES.ID_CLINICA = ${clinicaId}
@@ -51,63 +51,47 @@ export class BackupRepository {
   //   dbConfig: DatabaseConfig,
   // ): Promise<interfaces.Paciente[]> {
   //   const query = `
-  //     SELECT 
-  //       PACIENTES.NOME, 
-  //       PACIENTES.CPF, 
-  //       PACIENTES.RG, 
-  //       PACIENTES.CEP, 
-  //       PACIENTES.DATADENASCIMENTO, 
-  //       PACIENTES.OBSERVACAO,
-  //       PACIENTES.EMAIL, 
-  //       PACIENTES.STATUS, 
-  //       PACIENTES.UF, 
-  //       PACIENTES.CIDADE,
-  //       PACIENTES.LOGRADOURO, 
-  //       PACIENTES.BAIRRO, 
-  //       PACIENTES.NUMERO, 
-  //       PACIENTES.TEL1, 
-  //       PACIENTES.TEL2, 
-  //       PACIENTES.CEL, 
-  //       PACIENTES.DATACRIACAO, 
-  //       PACIENTES.SEXO, 
-  //       PACIENTES.COMPLEMENTO, 
-  //       PACIENTES.NUMEROFICHA, 
-  //       PACIENTES.FOTO, 
-  //       PACIENTES.NOME_RESPONSAVEL, 
-  //       PACIENTES.CPF_RESPONSAVEL,
+  //   SELECT
+  //     P.NOME,
+  //     P.CPF,
+  //     P.RG,
+  //     P.CEP,
+  //     P.DATADENASCIMENTO,
+  //     P.OBSERVACAO,
+  //     P.EMAIL,
+  //     P.STATUS,
+  //     P.UF,
+  //     P.CIDADE,
+  //     P.LOGRADOURO,
+  //     P.BAIRRO,
+  //     P.NUMERO,
+  //     P.TEL1,
+  //     P.TEL2,
+  //     P.CEL,
+  //     P.DATACRIACAO,
+  //     P.SEXO,
+  //     P.COMPLEMENTO,
+  //     P.NUMEROFICHA,
+  //     P.FOTO,
+  //     P.NOME_RESPONSAVEL,
+  //     P.CPF_RESPONSAVEL,
+  //     A.ANOTACOES
+  //   FROM PACIENTES P
+  //   LEFT JOIN (
+  //     SELECT
+  //       ID_PACIENTE,
   //       STRING_AGG(
-  //         CONVERT(VARCHAR, PACIENTE_ANOTACOES.DATA, 103) + ' - ' + PACIENTE_ANOTACOES.DESCRICAO,
+  //         CONVERT(VARCHAR, DATA, 103) + ' - ' + DESCRICAO,
   //         CHAR(13) + CHAR(10)
-  //       ) WITHIN GROUP (ORDER BY PACIENTE_ANOTACOES.DATA) AS ANOTACOES
-  //     FROM PACIENTES
-  //     JOIN CLINICAS ON PACIENTES.ID_CLINICA = CLINICAS.ID
-  //     LEFT JOIN PACIENTE_ANOTACOES ON PACIENTES.ID = PACIENTE_ANOTACOES.ID_PACIENTE
-  //     WHERE PACIENTES.ID_CLINICA = ${clinicaId}
-  //     GROUP BY 
-  //       PACIENTES.NOME, 
-  //       PACIENTES.CPF, 
-  //       PACIENTES.RG, 
-  //       PACIENTES.CEP, 
-  //       PACIENTES.DATADENASCIMENTO, 
-  //       PACIENTES.OBSERVACAO,
-  //       PACIENTES.EMAIL, 
-  //       PACIENTES.STATUS, 
-  //       PACIENTES.UF, 
-  //       PACIENTES.CIDADE,
-  //       PACIENTES.LOGRADOURO, 
-  //       PACIENTES.BAIRRO, 
-  //       PACIENTES.NUMERO, 
-  //       PACIENTES.TEL1, 
-  //       PACIENTES.TEL2, 
-  //       PACIENTES.CEL, 
-  //       PACIENTES.DATACRIACAO, 
-  //       PACIENTES.SEXO, 
-  //       PACIENTES.COMPLEMENTO, 
-  //       PACIENTES.NUMEROFICHA, 
-  //       PACIENTES.FOTO, 
-  //       PACIENTES.NOME_RESPONSAVEL, 
-  //       PACIENTES.CPF_RESPONSAVEL
-  //   `;
+  //       ) WITHIN GROUP (
+  //         ORDER BY DATA
+  //       ) AS ANOTACOES
+  //     FROM PACIENTE_ANOTACOES
+  //     GROUP BY ID_PACIENTE
+  //   ) A
+  //     ON A.ID_PACIENTE = P.ID
+  //   WHERE P.ID_CLINICA = ${clinicaId}
+  // `;
 
   //   return await this.databaseService.executeQueryWithConfig<interfaces.Paciente>(dbConfig, query);
   // }

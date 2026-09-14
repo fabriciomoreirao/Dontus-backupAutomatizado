@@ -12,7 +12,6 @@ import { homedir } from 'os';
 import { basename, join } from 'path';
 import { PassThrough } from 'stream';
 import { pipeline } from 'stream/promises';
-import { RabbitMQService } from 'src/infra/rabbitmq/rabbitmq.service';
 import { subHours } from 'date-fns';
 
 @Injectable()
@@ -23,7 +22,6 @@ export class BackupService {
     private readonly backupRepository: BackupRepository,
     private readonly s3Service: S3Service,
     private readonly emailService: EmailService,
-    private readonly rabbitMQService: RabbitMQService,
   ) {}
 
   async processBackupByClinica(
@@ -34,15 +32,14 @@ export class BackupService {
     s3Prefix?: string,
     importarImagens?: boolean,
   ) {
-    const data = {
+    return this.getBackupByClinica(
       clinicaId,
       email,
       dbConfig,
       bucketName,
       s3Prefix,
       importarImagens,
-    };
-    this.rabbitMQService.publishToQueue('backupQueue', data);
+    );
   }
 
   async getBackupByClinica(

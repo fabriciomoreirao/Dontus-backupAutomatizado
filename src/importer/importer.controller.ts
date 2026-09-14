@@ -27,8 +27,8 @@ export class ImporterController {
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
-  summary: 'Converte abas de um Excel em INSERT statements SQL e retorna um arquivo TXT',
-  description: `
+    summary: 'Converte abas de um Excel em INSERT statements SQL e retorna um arquivo TXT',
+    description: `
     Recebe um arquivo Excel (.xlsx) e um JSON de mapeamentos.
 
     **Formato do campo \`mappings\` (JSON string):**

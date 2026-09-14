@@ -27,9 +27,11 @@ export class ImporterService {
       const skipHeader = mapping.skipHeaderRow !== false;
       const startRow = skipHeader ? 2 : 1;
       const { tableName, columns } = mapping;
-      const columnsSql = columns.map((c) => `[${c}]`).join(', ');
+      const columnsSql = columns.map(c => `[${c}]`).join(', ');
 
-      this.logger.log(`Processando aba "${mapping.sheetName}" -> tabela "${tableName}" (${worksheet.rowCount - (skipHeader ? 1 : 0)} linhas)`);
+      this.logger.log(
+        `Processando aba "${mapping.sheetName}" -> tabela "${tableName}" (${worksheet.rowCount - (skipHeader ? 1 : 0)} linhas)`,
+      );
 
       worksheet.eachRow((row, rowNumber) => {
         if (rowNumber < startRow) return;
@@ -39,7 +41,7 @@ export class ImporterService {
         const values = columns.map((_, idx) => this.formatValue(cells[idx + 1]));
 
         // Ignora linhas completamente vazias
-        if (values.every((v) => v === 'NULL')) return;
+        if (values.every(v => v === 'NULL')) return;
 
         lines.push(`INSERT INTO ${tableName} (${columnsSql}) VALUES (${values.join(', ')});`);
       });
@@ -75,7 +77,7 @@ export class ImporterService {
     // RichText
     if (typeof value === 'object' && 'richText' in (value as object)) {
       const rt = value as ExcelJS.CellRichTextValue;
-      const text = rt.richText.map((r) => r.text).join('');
+      const text = rt.richText.map(r => r.text).join('');
       return `'${text.replace(/'/g, "''")}'`;
     }
 

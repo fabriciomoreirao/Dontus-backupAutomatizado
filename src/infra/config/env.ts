@@ -21,7 +21,6 @@ export class EnvironmentValidator {
       'SMTP_USER',
       'SMTP_PASS',
       'EMAIL_FROM',
-      'RABBITMQ_URL',
     ];
 
     const missingVars: string[] = [];
