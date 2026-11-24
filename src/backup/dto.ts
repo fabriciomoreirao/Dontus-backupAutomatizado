@@ -58,6 +58,16 @@ export class BackupRequestDto {
   @IsOptional()
   importarImagens?: boolean = false;
 
+  @ApiProperty({
+    example: false,
+    description: 'Baixar os arquivos da aba Imagens para o disco local',
+    required: false,
+    default: true,
+  })
+  @IsBoolean()
+  @IsOptional()
+  baixarImagensLocal?: boolean = true;
+
   @ApiProperty({ type: DatabaseConfigDto, description: 'Configurações do banco de dados' })
   @IsNotEmpty()
   dbConfig: DatabaseConfigDto;

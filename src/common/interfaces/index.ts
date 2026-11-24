@@ -1,3 +1,9 @@
+export interface PacienteUltimoAgendamento {
+  'Nome do Paciente': string;
+  'Telefones registrados': string;
+  'Data do último agendamento': Date | null;
+}
+
 export interface Paciente {
   NOME: string;
   CPF: string;

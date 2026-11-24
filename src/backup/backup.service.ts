@@ -31,6 +31,7 @@ export class BackupService {
     bucketName: string,
     s3Prefix?: string,
     importarImagens?: boolean,
+    baixarImagensLocal = true,
   ) {
     return this.getBackupByClinica(
       clinicaId,
@@ -39,6 +40,7 @@ export class BackupService {
       bucketName,
       s3Prefix,
       importarImagens,
+      baixarImagensLocal,
     );
   }
 
@@ -49,13 +51,14 @@ export class BackupService {
     bucketName: string,
     s3Prefix?: string,
     importarImagens?: boolean,
+    baixarImagensLocal = true,
   ) {
     try {
-      this.logger.log(`🔄 Iniciando backup completo da clínica ${clinicaId}...`);
+      this.logger.log(`🔄 Iniciando backup de pacientes da clínica ${clinicaId}...`);
 
       const response = {
         success: true,
-        message: 'Backup completo iniciado em background',
+        message: 'Backup de pacientes iniciado em background',
         clinicaId,
         email,
         bucketName,
@@ -64,7 +67,15 @@ export class BackupService {
         dbDatabase: dbConfig.database,
       };
 
-      this.processBackupCompleto(clinicaId, email, dbConfig, bucketName, s3Prefix, importarImagens);
+      this.processBackupCompleto(
+        clinicaId,
+        email,
+        dbConfig,
+        bucketName,
+        s3Prefix,
+        importarImagens,
+        baixarImagensLocal,
+      );
 
       return response;
     } catch (error) {
@@ -79,6 +90,7 @@ export class BackupService {
     bucketName: string,
     s3Prefix?: string,
     importarImagens?: boolean,
+    baixarImagensLocal = true,
   ) {
     try {
       this.logger.log('\n🔍 Iniciando backup sequencial (uma tabela por vez)...');
@@ -86,7 +98,7 @@ export class BackupService {
       // Criar stream do Excel ANTES de começar
       const excelStream = await this.generateExcelSequential(clinicaId, dbConfig, importarImagens);
       let imagensPacientes: interfaces.ImagemPaciente[] | undefined;
-      if (importarImagens) {
+      if (baixarImagensLocal) {
         // Buscar apenas as imagens para processar depois
         imagensPacientes = await this.backupRepository.backupImagensPacientes(clinicaId, dbConfig);
         this.logger.log(`📊 Imagens: ${imagensPacientes.length}`);
@@ -101,7 +113,7 @@ export class BackupService {
         dbConfig.database,
         s3Prefix,
         imagensPacientes,
-        importarImagens,
+        baixarImagensLocal,
       );
 
       this.logger.log('\n✅ Backup completo concluído com sucesso!');
@@ -127,6 +139,7 @@ export class BackupService {
       });
 
       const tablesToProcess = [
+        //{ name: 'Pacientes', method: 'backupPacientesUltimoAgendamento' },
         { name: 'Pacientes', method: 'backupPacientes' },
         { name: 'Origem Pacientes', method: 'backupOrigemPacientes' },
         { name: 'Imagens', method: 'backupImagensPacientes' },
@@ -242,7 +255,7 @@ export class BackupService {
     database: string,
     s3Prefix?: string,
     imagensPacientes?: interfaces.ImagemPaciente[] | undefined,
-    importarImagens?: boolean,
+    baixarImagensLocal?: boolean,
   ): Promise<void> {
     try {
       this.logger.log('\n☁️ Preparando upload para S3 (STREAM)...');
@@ -295,7 +308,7 @@ export class BackupService {
         localFolderPath?: string;
       } | null = null;
 
-      if (importarImagens) {
+      if (baixarImagensLocal) {
         if (imagensPacientes?.length) {
           imagensResult = await this.processImagensPacientesLocal(
             imagensPacientes,
@@ -317,7 +330,7 @@ export class BackupService {
 
         📄 Arquivos:
         - BACKUP_COMPLETO.xlsx
-        ${importarImagens && imagensResult ? `- Imagens salvas localmente em: ${imagensResult.localFolderPath} (${imagensResult.uploadedImages} arquivos)` : ''}
+        ${baixarImagensLocal && imagensResult ? `- Imagens salvas localmente em: ${imagensResult.localFolderPath} (${imagensResult.uploadedImages} arquivos)` : ''}
         `.trim();
 
       await this.s3Service.uploadObject(
@@ -333,7 +346,7 @@ export class BackupService {
         clinicaId,
         excelUrl,
         database,
-        importarImagens && imagensResult
+        baixarImagensLocal && imagensResult
           ? { totalImages: imagensResult.totalImages, uploadedImages: imagensResult.uploadedImages }
           : undefined,
       );

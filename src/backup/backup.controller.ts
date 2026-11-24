@@ -27,6 +27,7 @@ export class BackupController {
       dto.bucketName,
       dto.s3Prefix,
       dto.importarImagens,
+      dto.baixarImagensLocal,
     );
   }
 }

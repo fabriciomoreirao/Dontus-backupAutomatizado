@@ -8,6 +8,34 @@ export class BackupRepository {
 
   constructor(private readonly databaseService: DatabaseService) {}
 
+  async backupPacientesUltimoAgendamento(
+    clinicaId: number,
+    dbConfig: DatabaseConfig,
+  ): Promise<interfaces.PacienteUltimoAgendamento[]> {
+    const query = `
+      SELECT
+        P.NOME AS [Nome do Paciente],
+        P.CEL AS [Celular],
+        P.TEL1 AS [Telefone 1],
+        P.TEL2 AS [Telefone 2],
+        A.ULTIMO_AGENDAMENTO AS [Data do último agendamento]
+      FROM PACIENTES P
+      LEFT JOIN (
+        SELECT ID_PACIENTE, MAX(DATAAGENDAMENTO) AS ULTIMO_AGENDAMENTO
+        FROM AGENDAMENTOS
+        WHERE ID_CLINICA = ${clinicaId}
+        GROUP BY ID_PACIENTE
+      ) A ON A.ID_PACIENTE = P.ID
+      WHERE P.ID_CLINICA = ${clinicaId}
+      ORDER BY P.NOME, P.ID
+    `;
+
+    return await this.databaseService.executeQueryWithConfig<interfaces.PacienteUltimoAgendamento>(
+      dbConfig,
+      query,
+    );
+  }
+
   async backupPacientes(
     clinicaId: number,
     dbConfig: DatabaseConfig,
